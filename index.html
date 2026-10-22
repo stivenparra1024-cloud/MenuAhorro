@@ -1,0 +1,1578 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>MenúAhorro - Come rico. Gasta mejor.</title>
+  <!-- Tailwind CSS -->
+  <script src="https://cdn.tailwindcss.com"></script>
+  <!-- Google Fonts: Playfair Display & Inter -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Playfair+Display:ital,wght@0,600;0,700;0,800;1,600&display=swap" rel="stylesheet">
+  <!-- Chart.js for Historical Spending Analytics -->
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+  <!-- FontAwesome Icons -->
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+
+  <script>
+    tailwind.config = {
+      theme: {
+        extend: {
+          colors: {
+            brand: {
+              cream: '#F8F7F2',
+              dark: '#133825',
+              green: '#1B3E2B',
+              sage: '#E4EFE6',
+              gold: '#EEBF59',
+              goldHover: '#E0B04A',
+              cardBg: '#FFFFFF',
+              muted: '#6B7280'
+            }
+          },
+          fontFamily: {
+            serif: ['Playfair Display', 'serif'],
+            sans: ['Inter', 'sans-serif']
+          }
+        }
+      }
+    }
+  </script>
+
+  <style>
+    /* Custom scrollbar & phone shell styles */
+    body {
+      background-color: #0d1a13;
+      font-family: 'Inter', sans-serif;
+      color: #1c2b21;
+    }
+
+    .font-serif-heading {
+      font-family: 'Playfair Display', serif;
+    }
+
+    /* Hide scrollbars for slick mobile feel */
+    .no-scrollbar::-webkit-scrollbar {
+      display: none;
+    }
+    .no-scrollbar {
+      -ms-overflow-style: none;
+      scrollbar-width: none;
+    }
+
+    /* Custom Switch / Checkbox Transitions */
+    .transition-all-custom {
+      transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+    }
+
+    /* Dynamic Island Glass effect */
+    .dynamic-island {
+      background: #000000;
+      border-radius: 20px;
+      height: 28px;
+      width: 110px;
+    }
+  </style>
+</head>
+<body class="min-h-screen flex flex-col justify-center items-center p-0 md:p-6 text-gray-800">
+
+  <!-- Desktop Bar to Switch Viewports -->
+  <div class="hidden md:flex items-center justify-between w-full max-w-5xl mb-4 px-4 text-white text-sm">
+    <div class="flex items-center gap-3">
+      <div class="w-8 h-8 rounded-full bg-brand-gold flex items-center justify-center text-brand-dark font-bold">
+        <i class="fa-solid fa-leaf"></i>
+      </div>
+      <div>
+        <h1 class="font-bold text-base text-brand-gold">MenúAhorro Colombia</h1>
+        <p class="text-xs text-gray-300">Sabana Occidente (Mosquera, Funza, Madrid)</p>
+      </div>
+    </div>
+    
+    <div class="flex items-center gap-2 bg-brand-green/80 p-1.5 rounded-xl border border-brand-sage/20">
+      <button onclick="setViewport('mobile')" id="btn-view-mobile" class="px-3 py-1.5 rounded-lg text-xs font-semibold bg-brand-gold text-brand-dark transition-all">
+        <i class="fa-solid fa-mobile-screen mr-1"></i> Vista Celular
+      </button>
+      <button onclick="setViewport('desktop')" id="btn-view-desktop" class="px-3 py-1.5 rounded-lg text-xs font-semibold text-gray-300 hover:text-white transition-all">
+        <i class="fa-solid fa-desktop mr-1"></i> Pantalla Completa
+      </button>
+    </div>
+  </div>
+
+  <!-- MAIN APP CONTAINER FRAME -->
+  <div id="app-viewport-container" class="w-full max-w-[430px] h-[880px] bg-brand-cream md:rounded-[48px] shadow-2xl relative overflow-hidden flex flex-col border-0 md:border-[10px] border-slate-800 transition-all duration-300">
+    
+    <!-- Phone Notch Header (Visible only in mobile view emulation) -->
+    <div id="phone-header" class="w-full bg-transparent pt-3 px-7 flex justify-between items-center z-50 select-none">
+      <span class="text-xs font-semibold text-brand-dark">9:41</span>
+      <div class="dynamic-island flex items-center justify-center">
+        <div class="w-2.5 h-2.5 rounded-full bg-blue-900/60 mr-2"></div>
+        <div class="w-2.5 h-2.5 rounded-full bg-green-500/80"></div>
+      </div>
+      <div class="flex items-center gap-1 text-xs text-brand-dark">
+        <i class="fa-solid fa-signal text-[10px]"></i>
+        <i class="fa-solid fa-wifi text-[10px]"></i>
+        <i class="fa-solid fa-battery-full text-xs"></i>
+      </div>
+    </div>
+
+    <!-- GLOBAL TOAST NOTIFICATION CONTAINER -->
+    <div id="toast-container" class="absolute top-12 left-4 right-4 z-[90] pointer-events-none flex flex-col gap-2"></div>
+
+    <!-- ========================================== -->
+    <!-- VIEW 1: ONBOARDING WELCOME HERO            -->
+    <!-- ========================================== -->
+    <div id="view-welcome" class="absolute inset-0 z-40 bg-brand-dark flex flex-col justify-end text-white p-6 bg-cover bg-center transition-all duration-300" 
+         style="background-image: linear-gradient(180deg, rgba(19, 56, 37, 0.2) 0%, rgba(19, 56, 37, 0.95) 75%), url('https://images.unsplash.com/photo-1540420773420-3366772f4999?auto=format&fit=crop&w=1000&q=80');">
+      
+      <!-- Top Brand Logo -->
+      <div class="absolute top-12 left-6 flex items-center gap-2">
+        <div class="w-10 h-10 rounded-full bg-white flex items-center justify-center text-brand-dark font-bold shadow-lg">
+          <i class="fa-solid fa-leaf text-brand-green text-lg"></i>
+          <span class="text-[10px] absolute -bottom-1 -right-1 bg-brand-gold text-brand-dark font-extrabold px-1 rounded-full">$</span>
+        </div>
+        <span class="font-bold text-xl tracking-tight text-white">Menú<span class="text-brand-gold">Ahorro</span></span>
+      </div>
+
+      <div class="mb-6 space-y-3">
+        <p class="text-xs font-bold tracking-widest text-brand-gold uppercase">Tu mercado, mejor pensado</p>
+        <h2 class="font-serif-heading text-4xl leading-tight font-bold text-white">Come rico.<br>Gasta mejor.</h2>
+        <p class="text-sm text-gray-200 leading-relaxed max-w-xs">
+          Organiza tu semana y ahorra en tu mercado, con recetas pensadas para ti en Cundinamarca.
+        </p>
+      </div>
+
+      <div class="space-y-3 mb-6">
+        <button onclick="goToOnboardingStep(1)" class="w-full py-4 bg-brand-gold hover:bg-brand-goldHover text-brand-dark font-bold rounded-2xl shadow-lg flex items-center justify-center gap-2 transition-all active:scale-[0.98]">
+          <span>Comenzar</span>
+          <i class="fa-solid fa-arrow-right text-sm"></i>
+        </button>
+        <button onclick="skipToMainApp()" class="w-full py-3 bg-transparent text-white font-semibold text-sm hover:underline text-center">
+          Explorar como invitado
+        </button>
+      </div>
+
+      <p class="text-[11px] text-center text-gray-300/80">Prototipo con datos reales de la Sabana Occidente</p>
+    </div>
+
+    <!-- ========================================== -->
+    <!-- VIEW 2: ONBOARDING STEP 1 (Municipality & Household) -->
+    <!-- ========================================== -->
+    <div id="view-step1" class="absolute inset-0 z-30 bg-brand-cream flex flex-col justify-between p-6 pt-14 hidden transition-all duration-300">
+      <div>
+        <div class="flex items-center justify-between mb-4">
+          <button onclick="goToWelcome()" class="w-10 h-10 rounded-full bg-white flex items-center justify-center shadow-sm text-brand-dark border border-gray-100">
+            <i class="fa-solid fa-chevron-left"></i>
+          </button>
+          <div class="w-1/2 bg-brand-sage h-1.5 rounded-full overflow-hidden">
+            <div class="bg-brand-green h-full w-1/2"></div>
+          </div>
+        </div>
+
+        <p class="text-xs font-bold uppercase tracking-wider text-brand-green/80">Empecemos por lo esencial</p>
+        <h2 class="font-serif-heading text-3xl font-bold text-brand-dark mt-1 mb-2">¿Para quién vamos a cocinar?</h2>
+        <p class="text-xs text-gray-600 mb-6">Usaremos estos datos para ajustar porciones y estimar tu mercado semanal.</p>
+
+        <!-- Municipality selection -->
+        <div class="mb-6">
+          <label class="block text-xs font-bold text-brand-dark mb-3">Tu municipio</label>
+          <div class="grid grid-cols-3 gap-2" id="muni-selector">
+            <button onclick="selectMunicipality('Madrid')" class="muni-btn py-3 rounded-2xl font-semibold text-sm transition-all border border-gray-200 bg-white text-gray-700 shadow-sm" data-muni="Madrid">Madrid</button>
+            <button onclick="selectMunicipality('Funza')" class="muni-btn py-3 rounded-2xl font-semibold text-sm transition-all border border-gray-200 bg-white text-gray-700 shadow-sm" data-muni="Funza">Funza</button>
+            <button onclick="selectMunicipality('Mosquera')" class="muni-btn active py-3 rounded-2xl font-semibold text-sm transition-all bg-brand-green text-white shadow-md font-bold" data-muni="Mosquera">Mosquera</button>
+          </div>
+        </div>
+
+        <!-- Household Persons Stepper -->
+        <div class="bg-white p-4 rounded-2xl border border-gray-200 shadow-sm mb-6 flex items-center justify-between">
+          <div>
+            <div class="text-base font-bold text-brand-dark" id="display-persons-count">4 personas</div>
+            <div class="text-xs text-gray-500">Porciones por cada comida</div>
+          </div>
+          <div class="flex items-center gap-3">
+            <button onclick="updatePersons(-1)" class="w-10 h-10 rounded-full bg-brand-cream hover:bg-gray-200 flex items-center justify-center text-brand-dark text-lg font-bold transition-all border border-gray-200">
+              <i class="fa-solid fa-minus text-xs"></i>
+            </button>
+            <button onclick="updatePersons(1)" class="w-10 h-10 rounded-full bg-brand-cream hover:bg-gray-200 flex items-center justify-center text-brand-dark text-lg font-bold transition-all border border-gray-200">
+              <i class="fa-solid fa-plus text-xs"></i>
+            </button>
+          </div>
+        </div>
+      </div>
+
+      <button onclick="goToOnboardingStep(2)" class="w-full py-4 bg-brand-green text-white font-bold rounded-2xl shadow-md flex items-center justify-center gap-2 hover:bg-brand-dark transition-all">
+        <span>Continuar</span>
+        <i class="fa-solid fa-arrow-right text-sm"></i>
+      </button>
+    </div>
+
+    <!-- ========================================== -->
+    <!-- VIEW 3: ONBOARDING STEP 2 (Budget & Diet) -->
+    <!-- ========================================== -->
+    <div id="view-step2" class="absolute inset-0 z-30 bg-brand-cream flex flex-col justify-between p-6 pt-14 hidden transition-all duration-300">
+      <div>
+        <div class="flex items-center justify-between mb-4">
+          <button onclick="goToOnboardingStep(1)" class="w-10 h-10 rounded-full bg-white flex items-center justify-center shadow-sm text-brand-dark border border-gray-100">
+            <i class="fa-solid fa-chevron-left"></i>
+          </button>
+          <div class="w-1/2 bg-brand-sage h-1.5 rounded-full overflow-hidden">
+            <div class="bg-brand-green h-full w-full"></div>
+          </div>
+        </div>
+
+        <p class="text-xs font-bold uppercase tracking-wider text-brand-green/80">Tu meta de ahorro</p>
+        <h2 class="font-serif-heading text-3xl font-bold text-brand-dark mt-1 mb-2">Planeemos sin pasarnos del presupuesto</h2>
+
+        <!-- Budget Hero Card -->
+        <div class="bg-brand-green text-white p-6 rounded-3xl text-center shadow-md my-4 relative overflow-hidden">
+          <div class="text-[10px] uppercase font-semibold text-brand-sage tracking-widest mb-1">COP</div>
+          <div class="font-serif-heading text-3xl font-bold text-brand-gold mb-1" id="onboarding-budget-value">$250.000</div>
+          <div class="text-xs text-brand-sage/80">por semana</div>
+        </div>
+
+        <!-- Budget Slider -->
+        <div class="mb-6 px-2">
+          <input type="range" min="80000" max="500000" step="10000" value="250000" id="budget-range" 
+                 oninput="onBudgetSliderChange(this.value)"
+                 class="w-full h-2 bg-gray-200 rounded-lg appearance-none cursor-pointer accent-brand-green">
+          <div class="flex justify-between text-[11px] text-gray-500 font-semibold mt-1">
+            <span>$80.000</span>
+            <span>$500.000</span>
+          </div>
+        </div>
+
+        <!-- Dietary Preferences -->
+        <div class="mb-4">
+          <label class="block text-xs font-bold text-brand-dark mb-3">Preferencia de alimentación</label>
+          <div class="space-y-2" id="diet-selector">
+            <button onclick="selectDietPreference('Sin restricciones')" class="diet-btn w-full p-3.5 rounded-2xl text-left text-sm font-semibold border flex justify-between items-center bg-white border-brand-green text-brand-dark shadow-sm" data-diet="Sin restricciones">
+              <span>Sin restricciones</span>
+              <i class="fa-solid fa-check text-brand-green check-icon"></i>
+            </button>
+            <button onclick="selectDietPreference('Más vegetales')" class="diet-btn w-full p-3.5 rounded-2xl text-left text-sm font-semibold border flex justify-between items-center bg-white border-gray-200 text-gray-700 shadow-sm" data-diet="Más vegetales">
+              <span>Más vegetales</span>
+              <i class="fa-solid fa-check text-brand-green check-icon hidden"></i>
+            </button>
+            <button onclick="selectDietPreference('Sin lácteos')" class="diet-btn w-full p-3.5 rounded-2xl text-left text-sm font-semibold border flex justify-between items-center bg-white border-gray-200 text-gray-700 shadow-sm" data-diet="Sin lácteos">
+              <span>Sin lácteos</span>
+              <i class="fa-solid fa-check text-brand-green check-icon hidden"></i>
+            </button>
+          </div>
+        </div>
+      </div>
+
+      <button onclick="finishOnboarding()" class="w-full py-4 bg-brand-green text-white font-bold rounded-2xl shadow-md flex items-center justify-center gap-2 hover:bg-brand-dark transition-all">
+        <span>Crear mi plan</span>
+        <i class="fa-solid fa-sparkles text-brand-gold text-sm"></i>
+      </button>
+    </div>
+
+    <!-- ========================================== -->
+    <!-- MAIN APP SCREEN & NAVIGATION (TABS)         -->
+    <!-- ========================================== -->
+    <div id="main-app" class="flex-1 flex flex-col justify-between overflow-hidden relative">
+      
+      <!-- Top App Bar Header -->
+      <div class="px-5 pt-2 pb-2 flex items-center justify-between bg-brand-cream border-b border-gray-200/50">
+        <div class="flex items-center gap-2">
+          <div class="w-8 h-8 rounded-full bg-brand-green flex items-center justify-center text-white font-bold text-sm shadow">
+            <i class="fa-solid fa-leaf text-brand-gold text-xs"></i>
+          </div>
+          <span class="font-bold text-lg text-brand-dark tracking-tight">Menú<span class="text-brand-green">Ahorro</span></span>
+        </div>
+        <div class="flex items-center gap-2">
+          <span id="header-muni-badge" class="text-[11px] font-bold bg-brand-sage text-brand-green px-2.5 py-1 rounded-full border border-brand-green/20 flex items-center gap-1">
+            <i class="fa-solid fa-location-dot"></i> <span id="lbl-header-muni">Mosquera</span>
+          </span>
+          <button onclick="openChatbot()" class="w-8 h-8 rounded-full bg-brand-gold/20 hover:bg-brand-gold/40 text-brand-dark flex items-center justify-center transition-all relative">
+            <i class="fa-solid fa-robot text-xs text-brand-green"></i>
+            <span class="absolute -top-1 -right-1 w-2.5 h-2.5 bg-red-500 rounded-full border-2 border-white"></span>
+          </button>
+        </div>
+      </div>
+
+      <!-- MAIN SCROLLABLE CONTENT BODY -->
+      <div id="app-content" class="flex-1 overflow-y-auto no-scrollbar p-5 pb-24 space-y-6">
+
+        <!-- TAB 1: INICIO (HOME DASHBOARD) -->
+        <div id="tab-inicio" class="tab-content space-y-5">
+          <!-- Greeting Header -->
+          <div>
+            <p class="text-[10px] font-bold tracking-widest text-brand-green/70 uppercase" id="muni-subtitle">MOSQUERA, CUNDINAMARCA</p>
+            <h2 class="font-serif-heading text-2xl font-bold text-brand-dark">¡Hola! Organicemos tu semana</h2>
+          </div>
+
+          <!-- Weekly Budget Main Card -->
+          <div class="bg-brand-green text-white p-5 rounded-3xl shadow-md relative overflow-hidden">
+            <div class="flex justify-between items-start mb-2">
+              <span class="text-xs text-brand-sage font-semibold">Presupuesto semanal</span>
+              <button onclick="openEditBudgetModal()" class="w-7 h-7 rounded-full bg-white/10 hover:bg-white/20 flex items-center justify-center text-white transition-all">
+                <i class="fa-solid fa-pencil text-xs"></i>
+              </button>
+            </div>
+            <div class="font-serif-heading text-3xl font-bold text-white mb-3" id="home-budget-display">$250.000</div>
+            
+            <!-- Progress bar -->
+            <div class="w-full bg-black/30 h-2 rounded-full overflow-hidden mb-3">
+              <div class="bg-brand-gold h-full rounded-full transition-all duration-500" id="home-budget-progress" style="width: 67%;"></div>
+            </div>
+
+            <div class="flex justify-between text-xs pt-1 border-t border-white/10">
+              <div>
+                <span class="text-brand-sage/70 block text-[10px]">Menú estimado</span>
+                <span class="font-bold text-white" id="home-menu-estimate">$168.400</span>
+              </div>
+              <div class="text-right">
+                <span class="text-brand-sage/70 block text-[10px]">Te quedarían</span>
+                <span class="font-bold text-brand-gold" id="home-menu-remaining">$81.600</span>
+              </div>
+            </div>
+          </div>
+
+          <!-- Savings Planner Banner -->
+          <div class="bg-brand-sage border border-brand-green/20 p-4 rounded-2xl flex items-center justify-between cursor-pointer hover:shadow-sm transition-all" onclick="switchTab('tab-menu')">
+            <div class="flex items-center gap-3">
+              <div class="w-10 h-10 rounded-xl bg-brand-gold/30 flex items-center justify-center text-brand-dark font-bold">
+                <i class="fa-solid fa-wand-magic-sparkles text-brand-green text-base"></i>
+              </div>
+              <div>
+                <h4 class="font-bold text-sm text-brand-dark">Planificador de ahorro</h4>
+                <p class="text-xs text-gray-600">Crea un menú según tu presupuesto</p>
+              </div>
+            </div>
+            <i class="fa-solid fa-chevron-right text-brand-green text-xs"></i>
+          </div>
+
+          <!-- Today's Menu Section -->
+          <div>
+            <div class="flex justify-between items-center mb-3">
+              <div>
+                <h3 class="font-bold text-base text-brand-dark">Tu menú de hoy</h3>
+                <p class="text-xs text-gray-500" id="home-portions-label">Para 2 personas</p>
+              </div>
+              <button onclick="switchTab('tab-menu')" class="text-xs font-bold text-brand-green hover:underline">Ver semana</button>
+            </div>
+
+            <!-- Recipe Cards List -->
+            <div class="space-y-3" id="today-recipe-list">
+              <!-- Rendered via Javascript -->
+            </div>
+          </div>
+
+          <!-- Market Savings Promo Banner -->
+          <div class="bg-brand-sage/60 border border-brand-green/20 p-4 rounded-2xl flex items-center justify-between">
+            <div>
+              <span class="text-[9px] bg-brand-gold text-brand-dark px-1.5 py-0.5 rounded font-bold uppercase tracking-wider">DEMO</span>
+              <h4 class="font-bold text-sm text-brand-dark mt-1">Ahorra en tu mercado</h4>
+              <p class="text-xs text-gray-600">El arroz de 1 kg más conveniente</p>
+              <div class="text-xs font-bold text-brand-green mt-1">Ahorra hasta $400 <span class="font-normal text-gray-500">(Comparando 2 tiendas)</span></div>
+            </div>
+            <div class="w-14 h-14 rounded-full bg-brand-green text-white flex flex-col items-center justify-center text-center p-1 font-bold shadow-sm">
+              <span class="text-sm leading-none">8%</span>
+              <span class="text-[8px] font-normal">menos</span>
+            </div>
+          </div>
+
+          <!-- Featured Cost-Effective Idea Card -->
+          <div>
+            <h3 class="font-bold text-base text-brand-dark mb-3">Una idea rendidora</h3>
+            <div class="rounded-3xl overflow-hidden relative shadow-md bg-brand-dark text-white min-h-[160px] flex flex-col justify-end p-4 bg-cover bg-center" 
+                 style="background-image: linear-gradient(180deg, rgba(0,0,0,0) 20%, rgba(0,0,0,0.85) 100%), url('https://images.unsplash.com/photo-1546833999-b9f581a1996d?auto=format&fit=crop&w=600&q=80');">
+              <span class="text-[10px] uppercase font-bold text-brand-gold tracking-widest">Económica y nutritiva</span>
+              <h4 class="font-serif-heading text-xl font-bold">Lentejas caseras con arroz</h4>
+              <p class="text-xs text-gray-200 mt-1">$4.300 aprox. por porción</p>
+            </div>
+          </div>
+        </div>
+
+        <!-- TAB 2: MI MENÚ (WEEKLY MEAL PLANNER) -->
+        <div id="tab-menu" class="tab-content space-y-4 hidden">
+          <!-- Top Week Control Header -->
+          <div class="bg-brand-green text-white p-4 rounded-2xl flex justify-between items-center shadow-sm">
+            <div>
+              <span class="text-[10px] uppercase tracking-wider text-brand-sage block">Esta semana</span>
+              <span class="font-serif-heading text-2xl font-bold text-brand-gold" id="menu-tab-total-cost">$84.200</span>
+              <span class="text-[10px] text-brand-sage/70 block">Estimado · datos demo</span>
+            </div>
+            <div class="flex items-center gap-2 bg-black/20 p-1.5 rounded-xl border border-white/10">
+              <button onclick="updatePersons(-1)" class="w-7 h-7 rounded-lg bg-white/10 text-white flex items-center justify-center font-bold hover:bg-white/20">-</button>
+              <span class="text-xs font-bold px-1" id="menu-tab-persons"><i class="fa-solid fa-user text-[10px] mr-1"></i>2</span>
+              <button onclick="updatePersons(1)" class="w-7 h-7 rounded-lg bg-white/10 text-white flex items-center justify-center font-bold hover:bg-white/20">+</button>
+            </div>
+          </div>
+
+          <!-- Day Navigation Selector -->
+          <div class="flex justify-between items-center gap-1 overflow-x-auto no-scrollbar py-1" id="days-nav">
+            <!-- Rendered by JS -->
+          </div>
+
+          <!-- Selected Day Header -->
+          <div class="flex justify-between items-end pt-2">
+            <div>
+              <h3 class="font-serif-heading text-2xl font-bold text-brand-dark" id="selected-day-title">Lunes</h3>
+            </div>
+            <span class="text-xs font-semibold text-gray-500" id="selected-day-summary">3 comidas · $22.200</span>
+          </div>
+
+          <!-- Meal Cards List for Selected Day -->
+          <div class="space-y-3" id="day-meals-container">
+            <!-- Rendered via JS -->
+          </div>
+
+          <button onclick="openShoppingListFromMenu()" class="w-full py-3.5 bg-brand-green text-white font-bold rounded-2xl shadow flex items-center justify-center gap-2 hover:bg-brand-dark transition-all mt-4">
+            <i class="fa-solid fa-basket-shopping text-brand-gold"></i>
+            <span>Crear lista de compras</span>
+          </button>
+        </div>
+
+        <!-- TAB 3: MI MERCADO (GROCERY SHOPPING LIST) -->
+        <div id="tab-mercado" class="tab-content space-y-4 hidden">
+          <div class="flex justify-between items-center">
+            <div>
+              <h2 class="font-serif-heading text-2xl font-bold text-brand-dark">Lista de compras</h2>
+              <p class="text-xs text-gray-500">Optimizada para tu presupuesto</p>
+            </div>
+            <button onclick="resetShoppingList()" class="text-xs text-brand-green font-bold bg-brand-sage px-3 py-1.5 rounded-xl border border-brand-green/20 hover:bg-brand-sage/80 transition-all">
+              <i class="fa-solid fa-rotate-right mr-1"></i> Reiniciar
+            </button>
+          </div>
+
+          <!-- Progress Bar Meter Card -->
+          <div class="bg-brand-green text-white p-4 rounded-2xl shadow-sm flex items-center justify-between">
+            <div class="flex items-center gap-3">
+              <div class="w-12 h-12 rounded-full border-4 border-brand-gold flex items-center justify-center font-bold text-xs" id="shopping-progress-circle">
+                0%
+              </div>
+              <div>
+                <h4 class="font-bold text-sm" id="shopping-items-count">0 de 7 productos</h4>
+                <p class="text-[11px] text-brand-sage">Avanza marcando lo que ya compraste</p>
+              </div>
+            </div>
+            <button onclick="quickCheckHomeItems()" class="text-xs bg-white/10 hover:bg-white/20 p-2 rounded-xl text-brand-sage flex flex-col items-center">
+              <i class="fa-solid fa-house-circle-check text-sm text-brand-gold"></i>
+              <span class="text-[9px] mt-0.5">Tengo varios</span>
+            </button>
+          </div>
+
+          <!-- Add Product Field -->
+          <div class="flex gap-2">
+            <input type="text" id="custom-item-input" placeholder="Agregar otro producto..." 
+                   class="flex-1 bg-white border border-gray-200 rounded-2xl px-4 py-3 text-sm focus:outline-none focus:border-brand-green shadow-sm">
+            <button onclick="addCustomShoppingItem()" class="px-5 bg-brand-green text-white font-bold text-sm rounded-2xl hover:bg-brand-dark shadow-sm">
+              Añadir
+            </button>
+          </div>
+
+          <!-- Shopping Categories Container -->
+          <div class="space-y-4" id="shopping-categories-list">
+            <!-- Rendered by JS -->
+          </div>
+        </div>
+
+        <!-- TAB 4: PRECIOS (SUPERMARKET COMPARISON) -->
+        <div id="tab-precios" class="tab-content space-y-4 hidden">
+          <div>
+            <h2 class="font-serif-heading text-2xl font-bold text-brand-dark">Comparador de precios</h2>
+            <p class="text-xs text-gray-500">Precios reales en cadenas y supermercados locales</p>
+          </div>
+
+          <!-- Location Selector Banner -->
+          <div class="bg-brand-sage/80 border border-brand-green/20 p-3 rounded-2xl flex items-center justify-between text-xs font-semibold text-brand-dark">
+            <div class="flex items-center gap-2">
+              <i class="fa-solid fa-map-location-dot text-brand-green text-base"></i>
+              <span>Buscando opciones en <strong id="lbl-prices-muni">Mosquera</strong></span>
+            </div>
+            <button onclick="goToOnboardingStep(1)" class="text-brand-green hover:underline text-[11px]">Cambiar</button>
+          </div>
+
+          <!-- Search Bar -->
+          <div class="relative">
+            <i class="fa-solid fa-magnifying-glass absolute left-4 top-3.5 text-gray-400 text-sm"></i>
+            <input type="text" id="price-search-input" onkeyup="filterPriceProducts()" placeholder="¿Qué producto buscas?" 
+                   class="w-full bg-white border border-gray-200 rounded-2xl pl-11 pr-4 py-3 text-sm focus:outline-none focus:border-brand-green shadow-sm">
+          </div>
+
+          <!-- Filter Pills -->
+          <div class="flex gap-2 overflow-x-auto no-scrollbar py-1" id="price-filter-pills">
+            <button onclick="filterPriceCategory('Todos')" class="price-pill active px-4 py-2 rounded-xl text-xs font-bold bg-brand-green text-white shadow-sm">Todos</button>
+            <button onclick="filterPriceCategory('Granos')" class="price-pill px-4 py-2 rounded-xl text-xs font-bold bg-white text-gray-700 border border-gray-200">Granos</button>
+            <button onclick="filterPriceCategory('Proteínas')" class="price-pill px-4 py-2 rounded-xl text-xs font-bold bg-white text-gray-700 border border-gray-200">Proteínas</button>
+            <button onclick="filterPriceCategory('Lácteos')" class="price-pill px-4 py-2 rounded-xl text-xs font-bold bg-white text-gray-700 border border-gray-200">Lácteos</button>
+          </div>
+
+          <div class="text-xs text-gray-500 font-semibold flex justify-between items-center">
+            <span id="supermarket-count-label">4 productos comparables</span>
+            <span class="text-[10px] text-gray-400">Actualizado recientemente</span>
+          </div>
+
+          <!-- Products Comparison Cards Container -->
+          <div class="space-y-4" id="supermarket-products-list">
+            <!-- Rendered by JS -->
+          </div>
+        </div>
+
+        <!-- TAB 5: HISTÓRICO & ESTADÍSTICAS (NEW EXPANDED FEATURE) -->
+        <div id="tab-historico" class="tab-content space-y-4 hidden">
+          <div>
+            <h2 class="font-serif-heading text-2xl font-bold text-brand-dark">Histórico de Gastos</h2>
+            <p class="text-xs text-gray-500">Almacenamiento y promedio de tu mercado a lo largo del tiempo</p>
+          </div>
+
+          <!-- Smart Notification Alert Badge -->
+          <div class="bg-emerald-50 border border-emerald-300 p-3.5 rounded-2xl flex items-start gap-3">
+            <div class="w-8 h-8 rounded-full bg-emerald-500 text-white flex items-center justify-center shrink-0 mt-0.5">
+              <i class="fa-solid fa-chart-line text-xs"></i>
+            </div>
+            <div>
+              <h4 class="font-bold text-xs text-emerald-900">¡Ahorro positivo este mes!</h4>
+              <p class="text-[11px] text-emerald-700 mt-0.5 leading-snug">
+                Estás gastando un <strong>7.4% menos</strong> que el promedio de tus últimos 6 meses en Cundinamarca.
+              </p>
+            </div>
+          </div>
+
+          <!-- Time Span Selector Pills -->
+          <div class="flex bg-gray-200/80 p-1 rounded-2xl gap-1 text-center">
+            <button onclick="setHistoryTimeframe('mes')" id="btn-tf-mes" class="tf-btn flex-1 py-2 text-xs font-bold rounded-xl bg-white text-brand-dark shadow-sm">Mes a Mes</button>
+            <button onclick="setHistoryTimeframe('6meses')" id="btn-tf-6meses" class="tf-btn flex-1 py-2 text-xs font-semibold text-gray-600">6 Meses</button>
+            <button onclick="setHistoryTimeframe('1ano')" id="btn-tf-1ano" class="tf-btn flex-1 py-2 text-xs font-semibold text-gray-600">1 Año</button>
+            <button onclick="setHistoryTimeframe('historico')" id="btn-tf-historico" class="tf-btn flex-1 py-2 text-xs font-semibold text-gray-600">Histórico</button>
+          </div>
+
+          <!-- Spending Key Metrics Cards -->
+          <div class="grid grid-cols-2 gap-3">
+            <div class="bg-white p-3.5 rounded-2xl border border-gray-200 shadow-sm">
+              <span class="text-[10px] text-gray-500 uppercase font-bold block">Promedio mensual</span>
+              <span class="font-serif-heading text-xl font-bold text-brand-dark" id="stat-avg-expense">$672.000</span>
+              <span class="text-[10px] text-emerald-600 block mt-0.5"><i class="fa-solid fa-arrow-down mr-0.5"></i>$32.000 vs. presupuesto</span>
+            </div>
+            <div class="bg-white p-3.5 rounded-2xl border border-gray-200 shadow-sm">
+              <span class="text-[10px] text-gray-500 uppercase font-bold block">Ahorro Acumulado</span>
+              <span class="font-serif-heading text-xl font-bold text-brand-green" id="stat-total-savings">$215.000</span>
+              <span class="text-[10px] text-gray-400 block mt-0.5">En 6 meses registrados</span>
+            </div>
+          </div>
+
+          <!-- Chart.js Container -->
+          <div class="bg-white p-4 rounded-2xl border border-gray-200 shadow-sm">
+            <div class="flex justify-between items-center mb-3">
+              <h4 class="font-bold text-xs text-brand-dark">Presupuesto vs. Gasto Real</h4>
+              <span class="text-[10px] bg-brand-sage text-brand-green px-2 py-0.5 rounded font-semibold">COP</span>
+            </div>
+            <div class="w-full h-48">
+              <canvas id="spendingChart"></canvas>
+            </div>
+          </div>
+
+          <!-- History Register Form Modal Launcher -->
+          <div class="bg-brand-sage/50 p-4 rounded-2xl border border-brand-green/20 flex items-center justify-between">
+            <div>
+              <h4 class="font-bold text-xs text-brand-dark">¿Registraste una nueva compra?</h4>
+              <p class="text-[11px] text-gray-600">Guarda el total del mercado de esta semana</p>
+            </div>
+            <button onclick="openAddExpenseModal()" class="px-3.5 py-2 bg-brand-green text-white text-xs font-bold rounded-xl hover:bg-brand-dark transition-all">
+              + Registrar
+            </button>
+          </div>
+
+          <!-- Historical Log Table List -->
+          <div>
+            <h4 class="font-bold text-sm text-brand-dark mb-2">Historial de registros</h4>
+            <div class="bg-white rounded-2xl border border-gray-200 overflow-hidden divide-y divide-gray-100 shadow-sm text-xs" id="expense-history-table">
+              <!-- Rendered by JS -->
+            </div>
+          </div>
+
+        </div>
+
+      </div>
+
+      <!-- BOTTOM TAB NAVIGATION BAR -->
+      <div id="bottom-navbar" class="absolute bottom-0 left-0 right-0 bg-white/95 backdrop-blur-md border-t border-gray-200 px-3 py-2 flex justify-around items-center z-20">
+        <button onclick="switchTab('tab-inicio')" class="nav-tab active flex flex-col items-center text-brand-green font-bold transition-all" data-tab="tab-inicio">
+          <i class="fa-solid fa-house text-lg"></i>
+          <span class="text-[10px] mt-0.5">Inicio</span>
+        </button>
+        <button onclick="switchTab('tab-menu')" class="nav-tab flex flex-col items-center text-gray-400 hover:text-brand-green font-medium transition-all" data-tab="tab-menu">
+          <i class="fa-solid fa-calendar-days text-lg"></i>
+          <span class="text-[10px] mt-0.5">Mi menú</span>
+        </button>
+        <button onclick="switchTab('tab-mercado')" class="nav-tab flex flex-col items-center text-gray-400 hover:text-brand-green font-medium transition-all" data-tab="tab-mercado">
+          <i class="fa-solid fa-basket-shopping text-lg"></i>
+          <span class="text-[10px] mt-0.5">Mi mercado</span>
+        </button>
+        <button onclick="switchTab('tab-precios')" class="nav-tab flex flex-col items-center text-gray-400 hover:text-brand-green font-medium transition-all" data-tab="tab-precios">
+          <i class="fa-solid fa-store text-lg"></i>
+          <span class="text-[10px] mt-0.5">Precios</span>
+        </button>
+        <button onclick="switchTab('tab-historico')" class="nav-tab flex flex-col items-center text-gray-400 hover:text-brand-green font-medium transition-all" data-tab="tab-historico">
+          <i class="fa-solid fa-chart-pie text-lg"></i>
+          <span class="text-[10px] mt-0.5">Histórico</span>
+        </button>
+      </div>
+
+    </div>
+
+    <!-- ========================================== -->
+    <!-- AI CHATBOT ASSISTANT "ChefAhorro"          -->
+    <!-- ========================================== -->
+    <div id="chatbot-drawer" class="absolute inset-0 bg-brand-cream z-50 transform translate-y-full transition-transform duration-300 flex flex-col">
+      <!-- Drawer Header -->
+      <div class="bg-brand-green text-white p-4 pt-10 flex justify-between items-center shadow-md">
+        <div class="flex items-center gap-3">
+          <div class="w-10 h-10 rounded-full bg-brand-gold text-brand-dark flex items-center justify-center font-bold text-lg">
+            <i class="fa-solid fa-robot"></i>
+          </div>
+          <div>
+            <h3 class="font-bold text-sm">ChefAhorro AI</h3>
+            <p class="text-[10px] text-brand-sage flex items-center gap-1">
+              <span class="w-2 h-2 rounded-full bg-emerald-400 animate-pulse"></span> Asistente de presupuesto y cocina
+            </p>
+          </div>
+        </div>
+        <button onclick="closeChatbot()" class="w-8 h-8 rounded-full bg-white/10 hover:bg-white/20 flex items-center justify-center text-white">
+          <i class="fa-solid fa-xmark"></i>
+        </button>
+      </div>
+
+      <!-- Chat Messages Scroll Container -->
+      <div id="chat-messages" class="flex-1 overflow-y-auto p-4 space-y-3 no-scrollbar text-xs">
+        <div class="flex gap-2.5 items-start">
+          <div class="w-7 h-7 rounded-full bg-brand-green text-white flex items-center justify-center text-xs shrink-0 mt-1">
+            <i class="fa-solid fa-robot"></i>
+          </div>
+          <div class="bg-white p-3 rounded-2xl rounded-tl-none border border-gray-200 max-w-[80%] shadow-sm text-gray-700">
+            ¡Hola! Soy tu asistente de MenúAhorro. ¿En qué te ayudo hoy? Puedo sugerirte recetas baratas en Mosquera, sustitutos de ingredientes o trucos para rendir el presupuesto.
+          </div>
+        </div>
+      </div>
+
+      <!-- Quick Suggestion Pills -->
+      <div class="px-4 py-2 bg-brand-sage/40 flex gap-2 overflow-x-auto no-scrollbar border-t border-gray-200/60">
+        <button onclick="sendQuickChat('¿Cómo reemplazo la pechuga de pollo por algo más barato?')" class="shrink-0 bg-white border border-brand-green/30 px-3 py-1.5 rounded-full text-[11px] text-brand-dark font-medium hover:bg-brand-sage">
+          💡 Sustituir proteína
+        </button>
+        <button onclick="sendQuickChat('¿Dónde consigo verduras baratas en Mosquera o Funza?')" class="shrink-0 bg-white border border-brand-green/30 px-3 py-1.5 rounded-full text-[11px] text-brand-dark font-medium hover:bg-brand-sage">
+          🥬 Plazas de mercado
+        </button>
+        <button onclick="sendQuickChat('Dame un tip para ahorrar en el mercado esta semana')" class="shrink-0 bg-white border border-brand-green/30 px-3 py-1.5 rounded-full text-[11px] text-brand-dark font-medium hover:bg-brand-sage">
+          💰 Tip de ahorro
+        </button>
+      </div>
+
+      <!-- Chat Input Box -->
+      <div class="p-3 bg-white border-t border-gray-200 flex items-center gap-2">
+        <input type="text" id="chat-input" onkeypress="handleChatKeyPress(event)" placeholder="Escribe tu duda sobre comidas o precios..." 
+               class="flex-1 bg-gray-100 border border-gray-200 rounded-2xl px-4 py-3 text-xs focus:outline-none focus:border-brand-green">
+        <button onclick="submitChatMessage()" class="w-10 h-10 rounded-2xl bg-brand-green text-white flex items-center justify-center font-bold hover:bg-brand-dark transition-all">
+          <i class="fa-solid fa-paper-plane text-xs"></i>
+        </button>
+      </div>
+    </div>
+
+    <!-- MODAL 1: EDIT BUDGET -->
+    <div id="modal-edit-budget" class="absolute inset-0 bg-black/60 z-[60] flex items-center justify-center p-6 hidden">
+      <div class="bg-white rounded-3xl p-6 w-full max-w-xs shadow-2xl space-y-4">
+        <h3 class="font-serif-heading text-xl font-bold text-brand-dark">Ajustar presupuesto</h3>
+        <p class="text-xs text-gray-500">Modifica tu meta semanal de gasto en alimentación:</p>
+        <div class="relative">
+          <span class="absolute left-3 top-3.5 text-gray-400 font-bold text-sm">$</span>
+          <input type="number" id="input-edit-budget" class="w-full bg-gray-50 border border-gray-300 rounded-2xl pl-8 pr-4 py-3 font-bold text-brand-dark text-lg focus:outline-none focus:border-brand-green" value="250000">
+        </div>
+        <div class="flex gap-2 pt-2">
+          <button onclick="closeEditBudgetModal()" class="flex-1 py-3 bg-gray-100 text-gray-700 font-bold text-xs rounded-2xl">Cancelar</button>
+          <button onclick="saveNewBudget()" class="flex-1 py-3 bg-brand-green text-white font-bold text-xs rounded-2xl hover:bg-brand-dark">Guardar</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- MODAL 2: REGISTER EXPENSE LOG -->
+    <div id="modal-add-expense" class="absolute inset-0 bg-black/60 z-[60] flex items-center justify-center p-6 hidden">
+      <div class="bg-white rounded-3xl p-6 w-full max-w-xs shadow-2xl space-y-4">
+        <h3 class="font-serif-heading text-xl font-bold text-brand-dark">Registrar gasto real</h3>
+        <p class="text-xs text-gray-500">Ingresa el total que pagaste en tu última compra:</p>
+        <div>
+          <label class="text-[10px] font-bold uppercase text-gray-500">Monto gastado</label>
+          <input type="number" id="input-expense-amount" placeholder="Ej: 162000" class="w-full bg-gray-50 border border-gray-300 rounded-2xl px-4 py-2.5 font-bold text-brand-dark text-base focus:outline-none focus:border-brand-green mt-1">
+        </div>
+        <div>
+          <label class="text-[10px] font-bold uppercase text-gray-500">Lugar / Supermercado</label>
+          <select id="input-expense-store" class="w-full bg-gray-50 border border-gray-300 rounded-2xl px-3 py-2.5 text-xs text-brand-dark focus:outline-none focus:border-brand-green mt-1">
+            <option value="Tienda D1">Tienda D1</option>
+            <option value="Supermercado Ara">Supermercado Ara</option>
+            <option value="Almacenes Éxito">Almacenes Éxito</option>
+            <option value="Plaza de Mercado Mosquera">Plaza de Mercado Mosquera</option>
+            <option value="Otro local / Tienda de barrio">Otro local</option>
+          </select>
+        </div>
+        <div class="flex gap-2 pt-2">
+          <button onclick="closeAddExpenseModal()" class="flex-1 py-3 bg-gray-100 text-gray-700 font-bold text-xs rounded-2xl">Cancelar</button>
+          <button onclick="saveNewExpenseRecord()" class="flex-1 py-3 bg-brand-green text-white font-bold text-xs rounded-2xl hover:bg-brand-dark">Guardar Gasto</button>
+        </div>
+      </div>
+    </div>
+
+  </div> <!-- END APP CONTAINER FRAME -->
+
+  <!-- JAVASCRIPT APPLICATION LOGIC PERSISTENCE & DATA -->
+  <script>
+    // Global State Object with localStorage Persistence
+    let state = {
+      user: {
+        municipality: 'Mosquera',
+        persons: 2,
+        weeklyBudget: 250000,
+        dietPreference: 'Sin restricciones',
+        onboarded: false
+      },
+      activeTab: 'tab-inicio',
+      selectedDay: 'Lunes',
+      timeframe: 'mes',
+      historyLogs: [
+        { id: 1, date: '2026-10-18', amount: 162000, budget: 250000, store: 'Tienda D1' },
+        { id: 2, date: '2026-10-11', amount: 175000, budget: 250000, store: 'Supermercado Ara' },
+        { id: 3, date: '2026-10-04', amount: 158000, budget: 250000, store: 'Plaza de Mercado' },
+        { id: 4, date: '2026-09-27', amount: 180000, budget: 250000, store: 'Almacenes Éxito' }
+      ],
+      shoppingList: [
+        { id: 1, name: 'Tomate chonto', qty: '6 unidades', price: 5800, category: 'Frutas y verduras', checked: false, hasAtHome: false },
+        { id: 2, name: 'Cebolla larga', qty: '1 manojo', price: 3200, category: 'Frutas y verduras', checked: false, hasAtHome: false },
+        { id: 3, name: 'Zanahoria', qty: '500 g', price: 2600, category: 'Frutas y verduras', checked: false, hasAtHome: false },
+        { id: 4, name: 'Pechuga de pollo', qty: '1,2 kg', price: 21600, category: 'Carnes y proteínas', checked: false, hasAtHome: false },
+        { id: 5, name: 'Arroz blanco', qty: '1 kg', price: 5200, category: 'Granos y cereales', checked: false, hasAtHome: false },
+        { id: 6, name: 'Huevos AA', qty: '15 unidades', price: 9800, category: 'Lácteos y huevos', checked: false, hasAtHome: false },
+        { id: 7, name: 'Leche entera', qty: '1 Litro', price: 4200, category: 'Lácteos y huevos', checked: false, hasAtHome: false }
+      ]
+    };
+
+    // Recipe Database
+    const recipesData = {
+      'Lunes': [
+        { id: 'm1', meal: 'DESAYUNO', title: 'Huevos pericos con arepa', time: '15 min', price: 4600, img: 'https://images.unsplash.com/photo-1525351484163-7529414344d8?auto=format&fit=crop&w=400&q=80' },
+        { id: 'm2', meal: 'ALMUERZO', title: 'Arroz con pollo y verduras', time: '45 min', price: 11400, img: 'https://images.unsplash.com/photo-1512058564366-18510be2db19?auto=format&fit=crop&w=400&q=80' },
+        { id: 'm3', meal: 'CENA', title: 'Crema de verduras casera', time: '30 min', price: 6200, img: 'https://images.unsplash.com/photo-1547592166-23ac45744acd?auto=format&fit=crop&w=400&q=80' }
+      ],
+      'Martes': [
+        { id: 'm4', meal: 'DESAYUNO', title: 'Caldo de papa con cilantro', time: '20 min', price: 3800, img: 'https://images.unsplash.com/photo-1547592166-23ac45744acd?auto=format&fit=crop&w=400&q=80' },
+        { id: 'm5', meal: 'ALMUERZO', title: 'Lentejas guisadas con plátano', time: '40 min', price: 8600, img: 'https://images.unsplash.com/photo-1546833999-b9f581a1996d?auto=format&fit=crop&w=400&q=80' },
+        { id: 'm6', meal: 'CENA', title: 'Sándwich de atún y tomate', time: '10 min', price: 5400, img: 'https://images.unsplash.com/photo-1528735602780-2552fd46c7af?auto=format&fit=crop&w=400&q=80' }
+      ],
+      'Miércoles': [
+        { id: 'm7', meal: 'DESAYUNO', title: 'Omelette de cebolla y tomate', time: '12 min', price: 4200, img: 'https://images.unsplash.com/photo-1510693206972-df098062cb71?auto=format&fit=crop&w=400&q=80' },
+        { id: 'm8', meal: 'ALMUERZO', title: 'Carne molida con sudado de papa', time: '35 min', price: 12800, img: 'https://images.unsplash.com/photo-1544025162-d76694265947?auto=format&fit=crop&w=400&q=80' },
+        { id: 'm9', meal: 'CENA', title: 'Arepa con queso y chocolate caliente', time: '15 min', price: 4900, img: 'https://images.unsplash.com/photo-1541518763669-27fef04b14e8?auto=format&fit=crop&w=400&q=80' }
+      ],
+      'Jueves': [
+        { id: 'm10', meal: 'DESAYUNO', title: 'Avena cocida con banano', time: '10 min', price: 2900, img: 'https://images.unsplash.com/photo-1517673400267-0251440c45dc?auto=format&fit=crop&w=400&q=80' },
+        { id: 'm11', meal: 'ALMUERZO', title: 'Frijoles con garra y arroz', time: '50 min', price: 10500, img: 'https://images.unsplash.com/photo-1585238342024-78d387f4a707?auto=format&fit=crop&w=400&q=80' },
+        { id: 'm12', meal: 'CENA', title: 'Sopa de picadillo con zanahoria', time: '25 min', price: 4800, img: 'https://images.unsplash.com/photo-1547592166-23ac45744acd?auto=format&fit=crop&w=400&q=80' }
+      ],
+      'Viernes': [
+        { id: 'm13', meal: 'DESAYUNO', title: 'Huevos revueltos con tostadas', time: '10 min', price: 3900, img: 'https://images.unsplash.com/photo-1525351484163-7529414344d8?auto=format&fit=crop&w=400&q=80' },
+        { id: 'm14', meal: 'ALMUERZO', title: 'Pescado frito con patacones', time: '30 min', price: 14200, img: 'https://images.unsplash.com/photo-1519708227418-c8fd9a32b7a2?auto=format&fit=crop&w=400&q=80' },
+        { id: 'm15', meal: 'CENA', title: 'Tortilla Española casera', time: '20 min', price: 5100, img: 'https://images.unsplash.com/photo-1510693206972-df098062cb71?auto=format&fit=crop&w=400&q=80' }
+      ],
+      'Sábado': [
+        { id: 'm16', meal: 'DESAYUNO', title: 'Tamal con pan y chocolate', time: '15 min', price: 6500, img: 'https://images.unsplash.com/photo-1541518763669-27fef04b14e8?auto=format&fit=crop&w=400&q=80' },
+        { id: 'm17', meal: 'ALMUERZO', title: 'Ajiaco santafereño casero', time: '60 min', price: 15800, img: 'https://images.unsplash.com/photo-1547592166-23ac45744acd?auto=format&fit=crop&w=400&q=80' },
+        { id: 'm18', meal: 'CENA', title: 'Ensalada tibia con atún', time: '15 min', price: 5800, img: 'https://images.unsplash.com/photo-1540420773420-3366772f4999?auto=format&fit=crop&w=400&q=80' }
+      ],
+      'Domingo': [
+        { id: 'm19', meal: 'DESAYUNO', title: 'Pancakes con mermelada y frutas', time: '20 min', price: 5200, img: 'https://images.unsplash.com/photo-1567620905732-2d1ec7ab7445?auto=format&fit=crop&w=400&q=80' },
+        { id: 'm20', meal: 'ALMUERZO', title: 'Sancocho de gallina tradicional', time: '75 min', price: 16500, img: 'https://images.unsplash.com/photo-1547592166-23ac45744acd?auto=format&fit=crop&w=400&q=80' },
+        { id: 'm21', meal: 'CENA', title: 'Consomé suave con verdura', time: '20 min', price: 3500, img: 'https://images.unsplash.com/photo-1547592166-23ac45744acd?auto=format&fit=crop&w=400&q=80' }
+      ]
+    };
+
+    // Real Supermarket Comparison Database in Colombia
+    const supermarketProducts = [
+      {
+        id: 'p1',
+        name: 'Arroz blanco 1 kg',
+        brand: 'Diana / FlorHuila / D1',
+        category: 'Granos',
+        img: 'https://images.unsplash.com/photo-1586201375761-83865001e31c?auto=format&fit=crop&w=300&q=80',
+        stores: [
+          { name: 'Tienda D1', logo: 'D1', price: 4200, tag: 'MENOR PRECIO', date: 'Actualizado: Hoy' },
+          { name: 'Supermercado Ara', logo: 'ARA', price: 4400, tag: '', date: 'Actualizado: Hoy' },
+          { name: 'Almacenes Éxito', logo: 'EXT', price: 5200, tag: '', date: 'Actualizado: Ayer' },
+          { name: 'Mercado Vecinal Mosquera', logo: 'LOC', price: 4800, tag: '', date: 'Actualizado: Hace 2 días' }
+        ]
+      },
+      {
+        id: 'p2',
+        name: 'Pechuga de pollo fresca 1 kg',
+        brand: 'Campollo / Bucanero',
+        category: 'Proteínas',
+        img: 'https://images.unsplash.com/photo-1604503468506-a8da13d82791?auto=format&fit=crop&w=300&q=80',
+        stores: [
+          { name: 'Plaza de Mercado Mosquera', logo: 'PLZ', price: 16800, tag: 'MENOR PRECIO', date: 'Actualizado: Hoy' },
+          { name: 'Supermercado Ara', logo: 'ARA', price: 17800, tag: '', date: 'Actualizado: Hoy' },
+          { name: 'Tienda D1', logo: 'D1', price: 18200, tag: '', date: 'Actualizado: Hoy' },
+          { name: 'Almacenes Éxito', logo: 'EXT', price: 21500, tag: '', date: 'Actualizado: Ayer' }
+        ]
+      },
+      {
+        id: 'p3',
+        name: 'Huevos A (Panal x 30)',
+        brand: 'Kikes / Santa Reyes / D1',
+        category: 'Lácteos',
+        img: 'https://images.unsplash.com/photo-1516448620398-c5f44bf9f441?auto=format&fit=crop&w=300&q=80',
+        stores: [
+          { name: 'Supermercado Ara', logo: 'ARA', price: 17200, tag: 'MENOR PRECIO', date: 'Actualizado: Hoy' },
+          { name: 'Tienda D1', logo: 'D1', price: 17500, tag: '', date: 'Actualizado: Hoy' },
+          { name: 'Plaza de Mercado Mosquera', logo: 'PLZ', price: 18000, tag: '', date: 'Actualizado: Ayer' },
+          { name: 'Almacenes Éxito', logo: 'EXT', price: 19900, tag: '', date: 'Actualizado: Hoy' }
+        ]
+      },
+      {
+        id: 'p4',
+        name: 'Aceite Vegetal 900 ml',
+        brand: 'Girasoli / Premier',
+        category: 'Granos',
+        img: 'https://images.unsplash.com/photo-1474979266404-7eaacbcd87c5?auto=format&fit=crop&w=300&q=80',
+        stores: [
+          { name: 'Tienda D1', logo: 'D1', price: 8900, tag: 'MENOR PRECIO', date: 'Actualizado: Hoy' },
+          { name: 'Supermercado Ara', logo: 'ARA', price: 9200, tag: '', date: 'Actualizado: Hoy' },
+          { name: 'Almacenes Éxito', logo: 'EXT', price: 11400, tag: '', date: 'Actualizado: Ayer' }
+        ]
+      }
+    ];
+
+    let spendingChartInstance = null;
+
+    // INITIALIZATION ON LOAD
+    window.onload = function() {
+      loadStateFromStorage();
+      renderAllViews();
+      initChart();
+    };
+
+    function loadStateFromStorage() {
+      const saved = localStorage.getItem('menuAhorroState');
+      if (saved) {
+        try {
+          state = JSON.parse(saved);
+        } catch (e) {
+          console.error("Error reading saved state", e);
+        }
+      }
+    }
+
+    function saveState() {
+      localStorage.setItem('menuAhorroState', JSON.stringify(state));
+    }
+
+    // VIEW & NAVIGATION CONTROLLERS
+    function setViewport(type) {
+      const container = document.getElementById('app-viewport-container');
+      const btnMobile = document.getElementById('btn-view-mobile');
+      const btnDesktop = document.getElementById('btn-view-desktop');
+
+      if (type === 'desktop') {
+        container.classList.remove('max-w-[430px]', 'h-[880px]', 'md:rounded-[48px]', 'border-[10px]');
+        container.classList.add('max-w-5xl', 'h-[85vh]', 'rounded-2xl', 'border-0');
+        document.getElementById('phone-header').classList.add('hidden');
+        btnDesktop.classList.add('bg-brand-gold', 'text-brand-dark');
+        btnDesktop.classList.remove('text-gray-300');
+        btnMobile.classList.remove('bg-brand-gold', 'text-brand-dark');
+        btnMobile.classList.add('text-gray-300');
+      } else {
+        container.classList.add('max-w-[430px]', 'h-[880px]', 'md:rounded-[48px]', 'border-[10px]');
+        container.classList.remove('max-w-5xl', 'h-[85vh]', 'rounded-2xl', 'border-0');
+        document.getElementById('phone-header').classList.remove('hidden');
+        btnMobile.classList.add('bg-brand-gold', 'text-brand-dark');
+        btnMobile.classList.remove('text-gray-300');
+        btnDesktop.classList.remove('bg-brand-gold', 'text-brand-dark');
+        btnDesktop.classList.add('text-gray-300');
+      }
+      if (spendingChartInstance) spendingChartInstance.resize();
+    }
+
+    function goToWelcome() {
+      document.getElementById('view-welcome').classList.remove('hidden');
+      document.getElementById('view-step1').classList.add('hidden');
+      document.getElementById('view-step2').classList.add('hidden');
+    }
+
+    function goToOnboardingStep(step) {
+      document.getElementById('view-welcome').classList.add('hidden');
+      if (step === 1) {
+        document.getElementById('view-step1').classList.remove('hidden');
+        document.getElementById('view-step2').classList.add('hidden');
+      } else if (step === 2) {
+        document.getElementById('view-step1').classList.add('hidden');
+        document.getElementById('view-step2').classList.remove('hidden');
+      }
+    }
+
+    function skipToMainApp() {
+      document.getElementById('view-welcome').classList.add('hidden');
+      document.getElementById('view-step1').classList.add('hidden');
+      document.getElementById('view-step2').classList.add('hidden');
+      state.user.onboarded = true;
+      saveState();
+    }
+
+    function finishOnboarding() {
+      state.user.onboarded = true;
+      saveState();
+      document.getElementById('view-step2').classList.add('hidden');
+      renderAllViews();
+      showToast('¡Plan semanal personalizado con éxito!');
+    }
+
+    function selectMunicipality(muni) {
+      state.user.municipality = muni;
+      document.querySelectorAll('.muni-btn').forEach(btn => {
+        if (btn.getAttribute('data-muni') === muni) {
+          btn.className = "muni-btn active py-3 rounded-2xl font-bold text-sm transition-all bg-brand-green text-white shadow-md";
+        } else {
+          btn.className = "muni-btn py-3 rounded-2xl font-semibold text-sm transition-all border border-gray-200 bg-white text-gray-700 shadow-sm";
+        }
+      });
+      saveState();
+      renderHeaderLabels();
+    }
+
+    function updatePersons(delta) {
+      let current = state.user.persons + delta;
+      if (current < 1) current = 1;
+      if (current > 12) current = 12;
+      state.user.persons = current;
+      document.getElementById('display-persons-count').innerText = `${current} personas`;
+      document.getElementById('home-portions-label').innerText = `Para ${current} personas`;
+      document.getElementById('menu-tab-persons').innerHTML = `<i class="fa-solid fa-user text-[10px] mr-1"></i>${current}`;
+      saveState();
+      renderTodayRecipes();
+      renderDayMealList();
+    }
+
+    function onBudgetSliderChange(val) {
+      state.user.weeklyBudget = parseInt(val);
+      const formatted = '$' + state.user.weeklyBudget.toLocaleString('es-CO');
+      document.getElementById('onboarding-budget-value').innerText = formatted;
+      document.getElementById('home-budget-display').innerText = formatted;
+      saveState();
+      updateBudgetMetrics();
+    }
+
+    function selectDietPreference(diet) {
+      state.user.dietPreference = diet;
+      document.querySelectorAll('.diet-btn').forEach(btn => {
+        const isMatch = btn.getAttribute('data-diet') === diet;
+        const icon = btn.querySelector('.check-icon');
+        if (isMatch) {
+          btn.className = "diet-btn w-full p-3.5 rounded-2xl text-left text-sm font-semibold border flex justify-between items-center bg-white border-brand-green text-brand-dark shadow-sm";
+          if (icon) icon.classList.remove('hidden');
+        } else {
+          btn.className = "diet-btn w-full p-3.5 rounded-2xl text-left text-sm font-semibold border flex justify-between items-center bg-white border-gray-200 text-gray-700 shadow-sm";
+          if (icon) icon.classList.add('hidden');
+        }
+      });
+      saveState();
+    }
+
+    function switchTab(tabId) {
+      state.activeTab = tabId;
+      document.querySelectorAll('.tab-content').forEach(el => el.classList.add('hidden'));
+      document.getElementById(tabId).classList.remove('hidden');
+
+      document.querySelectorAll('.nav-tab').forEach(btn => {
+        if (btn.getAttribute('data-tab') === tabId) {
+          btn.className = "nav-tab active flex flex-col items-center text-brand-green font-bold transition-all";
+        } else {
+          btn.className = "nav-tab flex flex-col items-center text-gray-400 hover:text-brand-green font-medium transition-all";
+        }
+      });
+
+      if (tabId === 'tab-historico' && spendingChartInstance) {
+        setTimeout(() => spendingChartInstance.resize(), 100);
+      }
+    }
+
+    // MAIN RENDER PIPELINE
+    function renderAllViews() {
+      renderHeaderLabels();
+      updateBudgetMetrics();
+      renderTodayRecipes();
+      renderDayTabs();
+      renderDayMealList();
+      renderShoppingList();
+      renderSupermarketProducts(supermarketProducts);
+      renderHistoryTable();
+    }
+
+    function renderHeaderLabels() {
+      document.getElementById('lbl-header-muni').innerText = state.user.municipality;
+      document.getElementById('muni-subtitle').innerText = `${state.user.municipality.toUpperCase()}, CUNDINAMARCA`;
+      document.getElementById('lbl-prices-muni').innerText = state.user.municipality;
+    }
+
+    function updateBudgetMetrics() {
+      const budget = state.user.weeklyBudget;
+      const menuEstimate = 168400; // Sample calculated estimate
+      const remaining = budget - menuEstimate;
+      const progress = Math.min(100, Math.max(0, Math.round((menuEstimate / budget) * 100)));
+
+      document.getElementById('home-budget-display').innerText = '$' + budget.toLocaleString('es-CO');
+      document.getElementById('home-menu-estimate').innerText = '$' + menuEstimate.toLocaleString('es-CO');
+      
+      const remEl = document.getElementById('home-menu-remaining');
+      if (remaining >= 0) {
+        remEl.innerText = '$' + remaining.toLocaleString('es-CO');
+        remEl.className = "font-bold text-brand-gold";
+      } else {
+        remEl.innerText = '-$' + Math.abs(remaining).toLocaleString('es-CO');
+        remEl.className = "font-bold text-red-300";
+      }
+
+      document.getElementById('home-budget-progress').style.width = progress + '%';
+    }
+
+    function renderTodayRecipes() {
+      const container = document.getElementById('today-recipe-list');
+      const todayList = recipesData['Lunes']; // Default home displays Monday
+      let html = '';
+
+      todayList.forEach(item => {
+        const multipliedPrice = Math.round((item.price * state.user.persons) / 2);
+        html += `
+          <div class="bg-white p-3 rounded-2xl border border-gray-200/80 shadow-sm flex items-center gap-3 hover:shadow-md transition-all cursor-pointer" onclick="switchTab('tab-menu')">
+            <img src="${item.img}" class="w-16 h-16 rounded-xl object-cover shrink-0" alt="${item.title}">
+            <div class="flex-1 min-w-0">
+              <span class="text-[9px] font-extrabold uppercase text-brand-green tracking-wider">${item.meal}</span>
+              <h4 class="font-bold text-xs text-brand-dark truncate mt-0.5">${item.title}</h4>
+              <div class="flex items-center gap-2 text-[10px] text-gray-500 mt-1">
+                <span><i class="fa-regular fa-clock mr-0.5"></i>${item.time}</span>
+                <span>•</span>
+                <span><i class="fa-solid fa-users mr-0.5"></i>${state.user.persons} porciones</span>
+              </div>
+            </div>
+            <i class="fa-solid fa-chevron-right text-gray-300 text-xs"></i>
+          </div>
+        `;
+      });
+      container.innerHTML = html;
+    }
+
+    function renderDayTabs() {
+      const days = ['Lunes', 'Martes', 'Miércoles', 'Jueves', 'Viernes', 'Sábado', 'Domingo'];
+      const container = document.getElementById('days-nav');
+      let html = '';
+
+      days.forEach((day, idx) => {
+        const isSelected = day === state.selectedDay;
+        const dateNum = 10 + idx;
+        if (isSelected) {
+          html += `
+            <button onclick="selectDay('${day}')" class="flex flex-col items-center bg-brand-green text-white px-3.5 py-2 rounded-2xl shadow-sm shrink-0">
+              <span class="text-[10px] font-medium opacity-80">${day.substring(0, 3)}</span>
+              <span class="font-bold text-sm mt-0.5">${dateNum}</span>
+            </button>
+          `;
+        } else {
+          html += `
+            <button onclick="selectDay('${day}')" class="flex flex-col items-center bg-white text-gray-600 border border-gray-200 px-3.5 py-2 rounded-2xl shrink-0 hover:bg-brand-sage/50">
+              <span class="text-[10px] font-medium text-gray-400">${day.substring(0, 3)}</span>
+              <span class="font-bold text-sm text-brand-dark mt-0.5">${dateNum}</span>
+            </button>
+          `;
+        }
+      });
+      container.innerHTML = html;
+    }
+
+    function selectDay(day) {
+      state.selectedDay = day;
+      renderDayTabs();
+      renderDayMealList();
+    }
+
+    function renderDayMealList() {
+      const container = document.getElementById('day-meals-container');
+      const meals = recipesData[state.selectedDay] || [];
+      document.getElementById('selected-day-title').innerText = state.selectedDay;
+
+      let dayTotal = 0;
+      let html = '';
+
+      meals.forEach(item => {
+        const itemPrice = Math.round((item.price * state.user.persons) / 2);
+        dayTotal += itemPrice;
+
+        html += `
+          <div class="bg-white rounded-2xl border border-gray-200 overflow-hidden shadow-sm flex flex-col md:flex-row">
+            <div class="flex p-3 gap-3">
+              <img src="${item.img}" class="w-20 h-20 rounded-xl object-cover shrink-0" alt="${item.title}">
+              <div class="flex-1">
+                <span class="text-[9px] font-extrabold uppercase text-brand-green tracking-wider">${item.meal}</span>
+                <h4 class="font-bold text-sm text-brand-dark mt-0.5">${item.title}</h4>
+                <p class="text-[10px] text-gray-500 mt-0.5"><i class="fa-regular fa-clock mr-1"></i>${item.time} · ${state.user.persons} porciones</p>
+                <div class="text-xs font-bold text-brand-dark mt-1.5">$${itemPrice.toLocaleString('es-CO')} <span class="text-[10px] font-normal text-gray-400">aprox.</span></div>
+              </div>
+            </div>
+            <div class="bg-gray-50/80 px-3 py-2 border-t border-gray-100 flex justify-around text-xs font-semibold text-brand-green">
+              <button onclick="showToast('Cargando receta detallada...')" class="hover:underline flex items-center gap-1">
+                <i class="fa-regular fa-file-lines text-xs"></i> Ver receta
+              </button>
+              <button onclick="swapMeal('${item.id}')" class="hover:underline flex items-center gap-1 text-gray-600">
+                <i class="fa-solid fa-arrows-rotate text-xs"></i> Cambiar
+              </button>
+            </div>
+          </div>
+        `;
+      });
+
+      document.getElementById('selected-day-summary').innerText = `${meals.length} comidas · $${dayTotal.toLocaleString('es-CO')}`;
+      container.innerHTML = html;
+    }
+
+    function swapMeal(mealId) {
+      showToast('Menú alternativo cargado');
+      renderDayMealList();
+    }
+
+    function openShoppingListFromMenu() {
+      switchTab('tab-mercado');
+      showToast('Lista de compras actualizada con tu menú');
+    }
+
+    // SHOPPING LIST METHODS
+    function renderShoppingList() {
+      const categoriesList = document.getElementById('shopping-categories-list');
+      const items = state.shoppingList;
+
+      // Calculate progress
+      const total = items.length;
+      const checkedCount = items.filter(i => i.checked || i.hasAtHome).length;
+      const pct = total === 0 ? 0 : Math.round((checkedCount / total) * 100);
+
+      document.getElementById('shopping-progress-circle').innerText = `${pct}%`;
+      document.getElementById('shopping-items-count').innerText = `${checkedCount} de ${total} productos`;
+
+      // Group items
+      const grouped = {};
+      items.forEach(item => {
+        if (!grouped[item.category]) grouped[item.category] = [];
+        grouped[item.category].push(item);
+      });
+
+      let html = '';
+      for (const [catName, catItems] of Object.entries(grouped)) {
+        html += `
+          <div>
+            <div class="flex items-center gap-2 mb-2">
+              <h4 class="font-bold text-xs text-brand-dark">${catName}</h4>
+              <span class="text-[10px] bg-brand-sage text-brand-green font-bold px-2 py-0.5 rounded-full">${catItems.length}</span>
+            </div>
+            <div class="space-y-2">
+        `;
+
+        catItems.forEach(item => {
+          const isDone = item.checked || item.hasAtHome;
+          html += `
+            <div class="bg-white p-3 rounded-2xl border ${isDone ? 'border-gray-200 opacity-60 bg-gray-50' : 'border-gray-200'} shadow-sm flex items-center justify-between">
+              <div class="flex items-center gap-3">
+                <input type="checkbox" ${item.checked ? 'checked' : ''} onchange="toggleShoppingItem(${item.id})" 
+                       class="w-5 h-5 accent-brand-green rounded cursor-pointer">
+                <div>
+                  <span class="text-xs font-bold ${isDone ? 'line-through text-gray-400' : 'text-brand-dark'}">${item.name}</span>
+                  <span class="text-[10px] text-gray-500 block">${item.qty}</span>
+                </div>
+              </div>
+              <div class="text-right">
+                <span class="text-xs font-bold text-brand-dark">$${item.price.toLocaleString('es-CO')}</span>
+                <button onclick="toggleHasAtHome(${item.id})" class="text-[9px] block text-brand-green hover:underline mt-0.5">
+                  ${item.hasAtHome ? '✓ En casa' : 'Tengo en casa'}
+                </button>
+              </div>
+            </div>
+          `;
+        });
+
+        html += `</div></div>`;
+      }
+
+      categoriesList.innerHTML = html;
+    }
+
+    function toggleShoppingItem(id) {
+      const item = state.shoppingList.find(i => i.id === id);
+      if (item) item.checked = !item.checked;
+      saveState();
+      renderShoppingList();
+    }
+
+    function toggleHasAtHome(id) {
+      const item = state.shoppingList.find(i => i.id === id);
+      if (item) {
+        item.hasAtHome = !item.hasAtHome;
+        showToast(item.hasAtHome ? `Marcado '${item.name}' como existente en casa` : `Removido de en casa`);
+      }
+      saveState();
+      renderShoppingList();
+    }
+
+    function addCustomShoppingItem() {
+      const input = document.getElementById('custom-item-input');
+      const text = input.value.trim();
+      if (!text) return;
+
+      const newItem = {
+        id: Date.now(),
+        name: text,
+        qty: '1 unidad',
+        price: 3500,
+        category: 'Variados',
+        checked: false,
+        hasAtHome: false
+      };
+
+      state.shoppingList.push(newItem);
+      input.value = '';
+      saveState();
+      renderShoppingList();
+      showToast(`'${text}' añadido a la lista`);
+    }
+
+    function resetShoppingList() {
+      state.shoppingList.forEach(i => {
+        i.checked = false;
+        i.hasAtHome = false;
+      });
+      saveState();
+      renderShoppingList();
+      showToast('Lista de compras reiniciada');
+    }
+
+    function quickCheckHomeItems() {
+      state.shoppingList.slice(0, 3).forEach(i => i.hasAtHome = true);
+      saveState();
+      renderShoppingList();
+      showToast('Se marcaron los insumos básicos en casa');
+    }
+
+    // SUPERMARKET COMPARISON METHODS
+    function renderSupermarketProducts(products) {
+      const container = document.getElementById('supermarket-products-list');
+      document.getElementById('supermarket-count-label').innerText = `${products.length} productos comparables`;
+
+      let html = '';
+      products.forEach(p => {
+        html += `
+          <div class="bg-white rounded-2xl border border-gray-200 overflow-hidden shadow-sm p-3 space-y-3">
+            <div class="flex gap-3 items-center">
+              <img src="${p.img}" class="w-14 h-14 rounded-xl object-cover shrink-0" alt="${p.name}">
+              <div class="flex-1">
+                <span class="text-[9px] bg-brand-gold/40 text-brand-dark px-1.5 py-0.5 rounded font-bold uppercase">DATO REAL</span>
+                <h4 class="font-bold text-xs text-brand-dark mt-0.5">${p.name}</h4>
+                <p class="text-[10px] text-gray-500">${p.brand}</p>
+              </div>
+              <button onclick="addShoppingItemFromPrice('${p.name}', ${p.stores[0].price})" class="w-8 h-8 rounded-full bg-brand-sage text-brand-green flex items-center justify-center font-bold hover:bg-brand-green hover:text-white transition-all">
+                <i class="fa-solid fa-plus text-xs"></i>
+              </button>
+            </div>
+
+            <div class="space-y-1.5 border-t border-gray-100 pt-2">
+        `;
+
+        p.stores.forEach(s => {
+          const isLowest = s.tag === 'MENOR PRECIO';
+          html += `
+            <div class="flex justify-between items-center p-2 rounded-xl text-xs ${isLowest ? 'bg-brand-sage/60 border border-brand-green/20' : 'bg-gray-50'}">
+              <div>
+                <span class="font-bold text-brand-dark flex items-center gap-1.5">
+                  <span class="w-4 h-4 rounded text-[8px] font-black flex items-center justify-center ${isLowest ? 'bg-brand-green text-white' : 'bg-gray-300 text-gray-700'}">${s.logo}</span>
+                  ${s.name}
+                </span>
+                <span class="text-[9px] text-gray-400 block">${s.date}</span>
+              </div>
+              <div class="text-right">
+                ${isLowest ? '<span class="text-[8px] font-extrabold text-brand-green uppercase tracking-wider block">MENOR PRECIO</span>' : ''}
+                <span class="font-bold text-brand-dark">$${s.price.toLocaleString('es-CO')}</span>
+              </div>
+            </div>
+          `;
+        });
+
+        html += `
+            </div>
+            <div class="text-[10px] text-gray-400 flex items-center gap-1 pt-1">
+              <i class="fa-solid fa-check text-brand-green text-[8px]"></i>
+              <span>Comparación equivalente: misma presentación</span>
+            </div>
+          </div>
+        `;
+      });
+
+      container.innerHTML = html;
+    }
+
+    function filterPriceProducts() {
+      const q = document.getElementById('price-search-input').value.toLowerCase();
+      const filtered = supermarketProducts.filter(p => 
+        p.name.toLowerCase().includes(q) || p.brand.toLowerCase().includes(q)
+      );
+      renderSupermarketProducts(filtered);
+    }
+
+    function filterPriceCategory(cat) {
+      document.querySelectorAll('.price-pill').forEach(btn => {
+        if (btn.innerText === cat) {
+          btn.className = "price-pill active px-4 py-2 rounded-xl text-xs font-bold bg-brand-green text-white shadow-sm";
+        } else {
+          btn.className = "price-pill px-4 py-2 rounded-xl text-xs font-bold bg-white text-gray-700 border border-gray-200";
+        }
+      });
+
+      if (cat === 'Todos') {
+        renderSupermarketProducts(supermarketProducts);
+      } else {
+        const filtered = supermarketProducts.filter(p => p.category === cat);
+        renderSupermarketProducts(filtered);
+      }
+    }
+
+    function addShoppingItemFromPrice(name, price) {
+      const newItem = {
+        id: Date.now(),
+        name: name,
+        qty: '1 unidad',
+        price: price,
+        category: 'Comparados',
+        checked: false,
+        hasAtHome: false
+      };
+      state.shoppingList.push(newItem);
+      saveState();
+      renderShoppingList();
+      showToast(`'${name}' añadido a la lista`);
+    }
+
+    // HISTORICAL SPENDING & CHART ANALYTICS
+    function initChart() {
+      const ctx = document.getElementById('spendingChart').getContext('2d');
+      spendingChartInstance = new Chart(ctx, {
+        type: 'bar',
+        data: {
+          labels: ['S1 Sep', 'S2 Sep', 'S3 Sep', 'S4 Sep', 'S1 Oct', 'S2 Oct'],
+          datasets: [
+            {
+              label: 'Presupuesto',
+              data: [250000, 250000, 250000, 250000, 250000, 250000],
+              backgroundColor: '#E4EFE6',
+              borderRadius: 6
+            },
+            {
+              label: 'Gasto Real',
+              data: [198000, 210000, 180000, 175000, 162000, 175000],
+              backgroundColor: '#1B3E2B',
+              borderRadius: 6
+            }
+          ]
+        },
+        options: {
+          responsive: true,
+          maintainAspectRatio: false,
+          plugins: {
+            legend: { display: true, position: 'bottom', labels: { boxWidth: 10, font: { size: 10 } } }
+          },
+          scales: {
+            y: { ticks: { font: { size: 9 }, callback: val => '$' + (val / 1000) + 'k' }, grid: { display: false } },
+            x: { ticks: { font: { size: 9 } }, grid: { display: false } }
+          }
+        }
+      });
+    }
+
+    function setHistoryTimeframe(tf) {
+      state.timeframe = tf;
+      document.querySelectorAll('.tf-btn').forEach(btn => {
+        if (btn.id === `btn-tf-${tf}`) {
+          btn.className = "tf-btn flex-1 py-2 text-xs font-bold rounded-xl bg-white text-brand-dark shadow-sm";
+        } else {
+          btn.className = "tf-btn flex-1 py-2 text-xs font-semibold text-gray-600";
+        }
+      });
+
+      if (!spendingChartInstance) return;
+
+      if (tf === '6meses') {
+        spendingChartInstance.data.labels = ['Mayo', 'Junio', 'Julio', 'Agosto', 'Septiembre', 'Octubre'];
+        spendingChartInstance.data.datasets[0].data = [1000000, 1000000, 1000000, 1000000, 1000000, 1000000];
+        spendingChartInstance.data.datasets[1].data = [890000, 920000, 850000, 880000, 763000, 672000];
+      } else if (tf === '1ano') {
+        spendingChartInstance.data.labels = ['Ene', 'Mar', 'May', 'Jul', 'Sep', 'Oct'];
+        spendingChartInstance.data.datasets[0].data = [1000000, 1000000, 1000000, 1000000, 1000000, 1000000];
+        spendingChartInstance.data.datasets[1].data = [950000, 910000, 890000, 850000, 763000, 672000];
+      } else {
+        spendingChartInstance.data.labels = ['S1 Sep', 'S2 Sep', 'S3 Sep', 'S4 Sep', 'S1 Oct', 'S2 Oct'];
+        spendingChartInstance.data.datasets[0].data = [250000, 250000, 250000, 250000, 250000, 250000];
+        spendingChartInstance.data.datasets[1].data = [198000, 210000, 180000, 175000, 162000, 175000];
+      }
+      spendingChartInstance.update();
+    }
+
+    function renderHistoryTable() {
+      const container = document.getElementById('expense-history-table');
+      let html = '';
+
+      state.historyLogs.forEach(log => {
+        const savedAmount = log.budget - log.amount;
+        html += `
+          <div class="p-3 flex justify-between items-center hover:bg-gray-50">
+            <div>
+              <span class="font-bold text-brand-dark block text-xs">${log.store}</span>
+              <span class="text-[10px] text-gray-400">${log.date}</span>
+            </div>
+            <div class="text-right">
+              <span class="font-bold text-brand-dark block text-xs">$${log.amount.toLocaleString('es-CO')}</span>
+              <span class="text-[10px] text-emerald-600 font-medium">Ahorro: $${savedAmount.toLocaleString('es-CO')}</span>
+            </div>
+          </div>
+        `;
+      });
+
+      container.innerHTML = html;
+    }
+
+    function openAddExpenseModal() {
+      document.getElementById('modal-add-expense').classList.remove('hidden');
+    }
+
+    function closeAddExpenseModal() {
+      document.getElementById('modal-add-expense').classList.add('hidden');
+    }
+
+    function saveNewExpenseRecord() {
+      const amount = parseInt(document.getElementById('input-expense-amount').value);
+      const store = document.getElementById('input-expense-store').value;
+
+      if (!amount || isNaN(amount)) {
+        showToast('Ingresa un monto válido');
+        return;
+      }
+
+      const newLog = {
+        id: Date.now(),
+        date: new Date().toISOString().split('T')[0],
+        amount: amount,
+        budget: state.user.weeklyBudget,
+        store: store
+      };
+
+      state.historyLogs.unshift(newLog);
+      saveState();
+      renderHistoryTable();
+      closeAddExpenseModal();
+      showToast('Gasto guardado en tu histórico');
+    }
+
+    // MODAL EDIT BUDGET
+    function openEditBudgetModal() {
+      document.getElementById('input-edit-budget').value = state.user.weeklyBudget;
+      document.getElementById('modal-edit-budget').classList.remove('hidden');
+    }
+
+    function closeEditBudgetModal() {
+      document.getElementById('modal-edit-budget').classList.add('hidden');
+    }
+
+    function saveNewBudget() {
+      const val = parseInt(document.getElementById('input-edit-budget').value);
+      if (val && !isNaN(val)) {
+        state.user.weeklyBudget = val;
+        document.getElementById('budget-range').value = val;
+        saveState();
+        updateBudgetMetrics();
+        closeEditBudgetModal();
+        showToast('Presupuesto actualizado');
+      }
+    }
+
+    // AI CHATBOT FUNCTIONS
+    function openChatbot() {
+      document.getElementById('chatbot-drawer').classList.remove('translate-y-full');
+    }
+
+    function closeChatbot() {
+      document.getElementById('chatbot-drawer').classList.add('translate-y-full');
+    }
+
+    function sendQuickChat(text) {
+      document.getElementById('chat-input').value = text;
+      submitChatMessage();
+    }
+
+    function handleChatKeyPress(e) {
+      if (e.key === 'Enter') submitChatMessage();
+    }
+
+    function submitChatMessage() {
+      const input = document.getElementById('chat-input');
+      const msg = input.value.trim();
+      if (!msg) return;
+
+      const container = document.getElementById('chat-messages');
+
+      // User Message
+      container.innerHTML += `
+        <div class="flex gap-2.5 items-start justify-end">
+          <div class="bg-brand-green text-white p-3 rounded-2xl rounded-tr-none max-w-[80%] shadow-sm text-xs">
+            ${msg}
+          </div>
+        </div>
+      `;
+
+      input.value = '';
+      container.scrollTop = container.scrollHeight;
+
+      // Smart Bot Response
+      setTimeout(() => {
+        let reply = "Para ahorrar en la Sabana Occidente (Mosquera, Funza y Madrid), te sugiero comprar carnes y verduras en las Plazas de Mercado locales los fines de semana y complementar granos e insumos secos en Tiendas D1 o Ara.";
+
+        const lower = msg.toLowerCase();
+        if (lower.includes('pollo') || lower.includes('proteína') || lower.includes('reemplazo')) {
+          reply = "Puedes reemplazar la pechuga de pollo ($21.600/kg) por huevo AA o lentejas con arroz. Las lentejas rinden el doble y aportan excelente proteína con un costo de $4.300 por porción para 4 personas.";
+        } else if (lower.includes('plaza') || lower.includes('mercado') || lower.includes('donde') || lower.includes('dónde')) {
+          reply = "En Mosquera y Funza, la Plaza de Mercado Central ofrece verduras frescas hasta un 25% más económicas que los grandes supermercados. Te recomiendo comprar tomate y plátano allí.";
+        } else if (lower.includes('tip') || lower.includes('ahorrar')) {
+          reply = "Tip de la semana: Planifica tus comidas con anticipación para no comprar ingredientes innecesarios. Al usar la lista de compras de MenúAhorro puedes reducir hasta un 15% el desperdicio.";
+        }
+
+        container.innerHTML += `
+          <div class="flex gap-2.5 items-start">
+            <div class="w-7 h-7 rounded-full bg-brand-green text-white flex items-center justify-center text-xs shrink-0 mt-1">
+              <i class="fa-solid fa-robot"></i>
+            </div>
+            <div class="bg-white p-3 rounded-2xl rounded-tl-none border border-gray-200 max-w-[80%] shadow-sm text-gray-700">
+              ${reply}
+            </div>
+          </div>
+        `;
+        container.scrollTop = container.scrollHeight;
+      }, 600);
+    }
+
+    // TOAST NOTIFICATIONS
+    function showToast(msg) {
+      const container = document.getElementById('toast-container');
+      const toast = document.createElement('div');
+      toast.className = 'bg-brand-dark text-white px-4 py-2.5 rounded-2xl text-xs font-semibold shadow-xl border border-brand-gold/30 flex items-center gap-2 transform transition-all duration-300 translate-y-[-10px] opacity-0 pointer-events-auto';
+      toast.innerHTML = `<i class="fa-solid fa-circle-check text-brand-gold"></i> <span>${msg}</span>`;
+
+      container.appendChild(toast);
+
+      setTimeout(() => {
+        toast.classList.remove('translate-y-[-10px]', 'opacity-0');
+      }, 10);
+
+      setTimeout(() => {
+        toast.classList.add('opacity-0', 'translate-y-[-10px]');
+        setTimeout(() => toast.remove(), 300);
+      }, 2500);
+    }
+  </script>
+</body>
+</html>
